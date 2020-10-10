@@ -125,7 +125,7 @@
 		alight = new (src)
 	if(zoomable)
 		azoom = new (src)
-	build_zooming()
+//	build_zooming()
 
 /obj/item/gun/Destroy()
 	if(pin)
@@ -159,7 +159,7 @@
 /obj/item/gun/equipped(mob/living/user, slot)
 	. = ..()
 	if(user.get_active_held_item() != src) //we can only stay zoomed in if it's in our hands	//yeah and we only unzoom if we're actually zoomed using the gun!!
-		zoom(user, FALSE)
+		zoom(user, user.dir, FALSE)
 		if(zoomable == TRUE)
 			azoom.Remove(user)
 
@@ -534,7 +534,7 @@
 			src.zoomable = TRUE
 			src.zoom_amt = 10
 			src.zoom_out_amt = 13
-			src.build_zooming()
+//			src.build_zooming()
 			if(scope.icon_state in icon_states('icons/obj/guns/scopes.dmi'))
 				scope_overlay = scope.icon_state
 			var/icon/scope_icons = 'icons/obj/guns/scopes.dmi'
@@ -605,7 +605,7 @@
 
 /obj/item/gun/ui_action_click(mob/user, action)
 	if(istype(action, /datum/action/item_action/toggle_scope_zoom))
-		zoom(user)
+		zoom(user, user.dir)
 	else if(istype(action, alight))
 		toggle_gunlight()
 
@@ -723,44 +723,35 @@
 	. = ..()
 	if(!.)
 		var/obj/item/gun/G = target
-		G.zoom(owner, FALSE)
+		G.zoom(owner, owner.dir)
 
 /datum/action/item_action/toggle_scope_zoom/Remove(mob/living/L)
 	var/obj/item/gun/G = target
-	G.zoom(L, FALSE)
+	G.zoom(L, L.dir)
 	return ..()
 
-/obj/item/gun/proc/zoom(mob/living/user, forced_zoom)
-	if(!(user?.client))
+/obj/item/gun/proc/rotate(atom/thing, old_dir, new_dir)
+	if(ismob(thing))
+		var/mob/lad = thing
+		lad.client.view_size.zoomOut(zoom_out_amt, zoom_amt, new_dir)
+
+/obj/item/gun/proc/zoom(mob/living/user, direc, forced_zoom)
+	if(!user || !user.client)
 		return
 
-	if(!isnull(forced_zoom))
-		if(zoomed == forced_zoom)
-			return
-		zoomed = forced_zoom
-	else
+	if(isnull(forced_zoom))
 		zoomed = !zoomed
+	else
+		zoomed = forced_zoom
 
 	if(zoomed)
-		var/_x = 0
-		var/_y = 0
-		switch(user.dir)
-			if(NORTH)
-				_y = zoom_amt
-			if(EAST)
-				_x = zoom_amt
-			if(SOUTH)
-				_y = -zoom_amt
-			if(WEST)
-				_x = -zoom_amt
-
-		user.client.change_view(zoom_out_amt)
-		user.client.pixel_x = world.icon_size*_x
-		user.client.pixel_y = world.icon_size*_y
+//		RegisterSignal(user, COMSIG_MOVABLE_MOVED, .proc/on_walk)
+		RegisterSignal(user, COMSIG_ATOM_DIR_CHANGE, .proc/rotate)
+		user.client.view_size.zoomOut(zoom_out_amt, zoom_amt, direc)
 	else
-		user.client.change_view(CONFIG_GET(string/default_view))
-		user.client.pixel_x = 0
-		user.client.pixel_y = 0
+		UnregisterSignal(user, COMSIG_ATOM_DIR_CHANGE)
+		user.client.view_size.zoomIn()
+	return zoomed
 
 //Proc, so that gun accessories/scopes/etc. can easily add zooming.
 /obj/item/gun/proc/build_zooming()

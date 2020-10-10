@@ -39,6 +39,7 @@
 	. = ..()
 	update_config_movespeed()
 	update_movespeed(TRUE)
+	initialize_actionspeed()
 
 /mob/GenerateTag()
 	tag = "mob_[next_mob_id++]"

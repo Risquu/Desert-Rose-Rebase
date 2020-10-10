@@ -94,7 +94,7 @@
 	if(prob(10))
 		visible_message("<span class='danger'>\The [src] growls, enraged!</span>")
 		sleep(3)
-		Charge()
+		claw_charge()
 	if(prob(85) || Proj.damage > 30) //prob(x) = chance for proj to actually do something, adjust depending on how OP you want deathclaws to be
 		return ..()
 	else
@@ -121,7 +121,8 @@
 	if(charging)
 		DestroySurroundings()
 
-/mob/living/simple_animal/hostile/deathclaw/proc/Charge()
+//Different from charge system added by /tg/ in rebase.
+/mob/living/simple_animal/hostile/deathclaw/proc/claw_charge()
 	var/turf/T = get_turf(target)
 	if(!T || T == loc)
 		return
@@ -133,9 +134,9 @@
 	var/obj/effect/temp_visual/decoy/D = new /obj/effect/temp_visual/decoy(loc,src)
 	animate(D, alpha = 0, color = "#FF0000", transform = matrix()*2, time = 1)
 	sleep(3)
-	throw_at(T, get_dist(src, T), 1, src, 0, callback = CALLBACK(src, .proc/charge_end))
+	throw_at(T, get_dist(src, T), 1, src, 0, callback = CALLBACK(src, .proc/claw_charge_end))
 
-/mob/living/simple_animal/hostile/deathclaw/proc/charge_end(list/effects_to_destroy)
+/mob/living/simple_animal/hostile/deathclaw/proc/claw_charge_end(list/effects_to_destroy)
 	charging = FALSE
 	if(target)
 		Goto(target, move_to_delay, minimum_distance)
